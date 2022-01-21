@@ -4,10 +4,12 @@ from selenium.webdriver.support.wait import WebDriverWait
 import time
 import captchacrack
 import selefunc
+from urllib import parse
+from selenium.webdriver.support import expected_conditions as EC
 
 driver = selefunc.initDriver()
 
-# 1、中国执行公开
+# 1.1 中国执行公开
 def zxgk(arr):
   driver.get('http://zxgk.court.gov.cn/zhzxgk/')
   for i, k in enumerate(arr):
@@ -31,6 +33,33 @@ def zxgk(arr):
       time.sleep(2)
     except Exception as e:
       print('错误', e)
+
+# 1.2 失信被执行人
+def sx(arr):
+  driver.get('http://zxgk.court.gov.cn/shixin/')
+  for i, k in enumerate(arr):
+    try:
+      input = driver.find_element_by_id('pName')
+      input.send_keys(k)
+      element = driver.find_element_by_id('captchaImg')  # 定位验证码图片
+      element.click()
+      time.sleep(2)
+
+      captcha = captchacrack.normal_captcha_crack(element)
+      codeInput = driver.find_element_by_name('pCode')
+      codeInput.send_keys(captcha)
+      time.sleep(1)
+
+      btn = driver.find_element_by_xpath('//*[@id="yzm-group"]/div[6]/button')
+      btn.click()
+      time.sleep(2)
+      target = driver.find_element_by_xpath("/html/body/div[2]/div/div[2]/div[3]")
+      driver.execute_script("arguments[0].scrollIntoView();", target)
+      selefunc.screenshot_file_save('1.2 失信被执行人', i, k)
+      driver.refresh()
+      time.sleep(2)
+    except Exception as e:
+      print('sx错误', e)
 
 # 2、国家税务局
 def tax(arr):
@@ -224,12 +253,13 @@ def zjh(arr):
   
 
 # 6-5 中国证监会证券期货市场失信信息公开查询平台
+# todo 滑块反爬
 def qh(arr):
   driver.implicitly_wait(10)
   driver.get('https://neris.csrc.gov.cn/shixinchaxun/')
   for i, k in enumerate(arr):
     try:
-      input = driver.find_element_by_xpath('/html/body/div/div/div[2]/div/div[2]/form/div[1]/div/div/input')
+      input = driver.find_element_by_xpath('//*[@id="app"]/div/div/div[2]/div/div[2]/form/div[1]/div/div/input')
       input.send_keys(k)
       element = driver.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div[2]/form/div[3]/div/div[2]/img')  # 定位验证码图片
       element.click()
@@ -291,6 +321,36 @@ def yhy(arr):
     except Exception as e:
       print('yhy 错误', e)
   
+# 9-1 国家食品监督管理总局
+def spjj(arr):
+  for i, k in enumerate(arr):
+    try:
+      url = 'https://www.samr.gov.cn/search4/s?searchWord=' + k + '&x=18&y=13&column=%E5%85%A8%E9%83%A8&siteCode=bm30000012'
+      driver.get(url)
+      WebDriverWait(driver, 5).until(lambda driver:driver.find_element_by_class_name('fl'))
+      selefunc.screenshot_file_save('9-1 国家食品监督管理总局', i, k)
+      time.sleep(2)
+    except Exception as e:
+      print('syjj 错误', e)
+
+# 9-2 国家药品监督管理总局
+def ypjj(arr):
+  for i, k in enumerate(arr):
+    try:
+      url = 'https://www.nmpa.gov.cn/'
+      driver.get(url)
+      WebDriverWait(driver, 5).until(lambda driver:driver.find_element_by_id('qt')).clear()
+      input = driver.find_element_by_id('qt')
+      input.send_keys(k)
+      btn = driver.find_element_by_id('sosbtn')
+      btn.click()
+      time.sleep(3)
+      handles = driver.window_handles          #获取当前浏览器的所有窗口句柄
+      driver.switch_to.window(handles[-1])     #切换到最新打开的窗口
+      selefunc.screenshot_file_save('9-2 国家药品监督管理总局', i, k)
+      time.sleep(1)
+    except Exception as e:
+      print('ypjj 错误', e)
 
 # 10-1 国家统计局
 def gjtjj(arr):
@@ -315,7 +375,7 @@ def swb(arr):
       input.send_keys(k)
       btn = driver.find_element_by_xpath('/html/body/section/section/div[1]/div/div[1]/div[1]/div[2]/span')
       btn.click()
-      time.sleep(3)
+      WebDriverWait(driver, 5).until(lambda driver:driver.find_element_by_xpath('//*[@id="contentContainer"]/li'))
       selefunc.screenshot_file_save('12-1 商务部', i, k)
       time.sleep(1)
     except Exception as e:
@@ -334,6 +394,20 @@ def energy(arr):
       time.sleep(1)
     except Exception as e:
       print('energy 错误', e)
+
+
+# 13-2 信用能源
+def xyenergy(arr):
+  for i, k in enumerate(arr):
+    try:
+      url = 'http://so.news.cn/was5/web/search?channelid=229767&searchword=' + k
+      driver.get(url)
+      WebDriverWait(driver, 5).until(lambda driver:driver.find_element_by_class_name('sousuoTit'))
+      time.sleep(3)
+      selefunc.screenshot_file_save('13-2 信用能源', i, k)
+      time.sleep(1)
+    except Exception as e:
+      print('xyenergy 错误', e)
   
 
 # 13-2 中国海洋信息网
@@ -389,7 +463,24 @@ def zgcgw(arr):
     except Exception as e:
       print('zgcgw 错误', e)
   
-
+# 15-3 中国政府采购网代理机构不良行为记录名单
+def zgcgwblxx(arr):
+  for i, k in enumerate(arr):
+    try:
+      url = 'http://www.ccgp.gov.cn/agency/blxwjlmd/'
+      driver.get(url)
+      frame = driver.find_element_by_xpath('/html/body/div[2]/div/div[2]/iframe')
+      driver.switch_to.frame(frame)
+      WebDriverWait(driver, 5).until(lambda driver:driver.find_element_by_xpath('//*[@id="agentNm"]')).clear()
+      input = driver.find_element_by_xpath('//*[@id="agentNm"]')
+      input.send_keys(k)
+      btn = driver.find_element_by_xpath('/html/body/div/div/div[1]/table/tbody/tr/td[3]/input[1]')
+      btn.click()
+      time.sleep(3)
+      selefunc.screenshot_file_save('15-3 中国政府采购网代理机构不良行为记录名单', i, k)
+      time.sleep(1)
+    except Exception as e:
+      print('zgcgwblxx 错误', e)
 
 # 16-1 中国农业农村部
 def zgncb(arr):
@@ -484,6 +575,44 @@ def zrzyb(arr):
     except Exception as e:
       print('zrzyb 错误', e)
   
+# 中国中央人民政府
+def zgzyrmzf(arr):
+  for i, k in enumerate(arr):
+    try:
+      url = 'http://sousuo.gov.cn/s.htm?t=govall&q=' + k
+      driver.get(url)
+      WebDriverWait(driver, 5).until(lambda driver:driver.find_element_by_class_name('result'))
+      time.sleep(3)
+      selefunc.screenshot_file_save('中国中央人民政府', i, k)
+      time.sleep(1)
+    except Exception as e:
+      print('zgzyrmzf 错误', e)
+
+# 全国建筑市场监管公共服务平台
+def qgjzjgpt(arr):
+  for i, k in enumerate(arr):
+    try:
+      url = 'http://jzsc.mohurd.gov.cn/data/company?complexname=' + k
+      driver.get(url)
+      WebDriverWait(driver, 5).until(lambda driver:driver.find_element_by_class_name('scTable'))
+      time.sleep(3)
+      selefunc.screenshot_file_save('全国建筑市场监管公共服务平台', i, k)
+      time.sleep(1)
+    except Exception as e:
+      print('qgjzjgpt 错误', e)
+
+
+# 中华人民共和国国家发展和改革委员会
+def fgw(arr):
+  for i, k in enumerate(arr):
+    try:
+      url = 'https://so.ndrc.gov.cn/s?siteCode=bm04000007&ssl=1&token=&qt=' + k
+      driver.get(url)
+      time.sleep(3)
+      selefunc.screenshot_file_save('中华人民共和国国家发展和改革委员会', i, k)
+      time.sleep(1)
+    except Exception as e:
+      print('fgw 错误', e)
 
 # 百度
 def baidu(arr):
@@ -532,8 +661,9 @@ def sjs(arr):
     try:
       url = 'http://www.sse.com.cn/home/search/?webswd=' + k
       driver.get(url)
-      WebDriverWait(driver, 5).until(lambda driver:driver.find_element_by_xpath('//*[@id="resultTable"]/div[4]/div[2]'))
-      time.sleep(3)
+      WebDriverWait(driver, 10).until(
+            EC.text_to_be_present_in_element(('id', 'contword'), k))
+      time.sleep(5)
       selefunc.screenshot_file_save('上交所', i, k)
       time.sleep(1)
     except Exception as e:
@@ -567,6 +697,37 @@ def yyxh(arr):
     except Exception as e:
       print('yyxh 错误', e)
   
+# 信用盐业
+def xyyy(arr):
+  for i, k in enumerate(arr):
+    try:
+      url = 'http://yan.bcpcn.com/website/xyjl.jsp?keyword=' + k + '&searchtype=1&page=1'
+      driver.get(url)
+      time.sleep(3)
+      selefunc.screenshot_file_save('信用盐业', i, k)
+      time.sleep(1)
+    except Exception as e:
+      print('xyyy 错误', e)
+
+# 全国市场监管动产抵押登记业务系统
+def dcdydj(arr):
+  for i, k in enumerate(arr):
+    try:
+      url = 'http://dcdy.gsxt.gov.cn/es/getList.xhtml?currentTimeMillis=1642727648027&credit_ticket=F2CC049987A830C74D72637F29F39363&check_code=&key_word='+ parse.quote(parse.quote(k)) + '&pageNo=0'
+      driver.get(url)
+      # WebDriverWait(driver, 5).until(lambda driver:driver.find_element_by_xpath('//*[@id="gonggaotongzhi"]/div[2]/a[3]'))
+      # readed = driver.find_element_by_xpath('//*[@id="gonggaotongzhi"]/div[2]/a[3]')
+      # readed.click()
+      # WebDriverWait(driver, 5).until(lambda driver:driver.find_element_by_xpath('//*[@id="key_word"]')).clear()
+      # input =  driver.find_element_by_xpath('//*[@id="key_word"]')
+      # input.send_keys(k)
+      # btn = driver.find_element_by_xpath('/html/body/div[1]/div[2]/div/div/a')
+      # btn.click()
+      time.sleep(3)
+      selefunc.screenshot_file_save('全国市场监管动产抵押登记业务系统', i, k)
+      time.sleep(1)
+    except Exception as e:
+      print('全国市场监管动产抵押登记业务系统 错误', e)
 
 # 中国债券信息网
 def zgzqxxw(arr):
@@ -587,14 +748,9 @@ def zgzqxxw(arr):
   
  
 arr = [
-  '东吴证券股份有限公司',
+'公司名1',
+'公司名2',
 ]
-map = {
-  '1': '失信被执行人',
-  '2': '国家税务局',
-  '3-1': '应急管理部',
-  '3-3': '信用中国',
-}
 
 zxgk(arr)
 tax(arr)
@@ -606,7 +762,6 @@ ybj(arr)
 fgw(arr)
 sjj(arr)
 yhy(arr)
-gjtjj(arr)
 swb(arr)
 energy(arr)
 ocean(arr)
@@ -621,13 +776,25 @@ szjs(arr)
 yyxh(arr)
 zgzqxxw(arr)
 
+# # 1/20 新增
+sx(arr)
+spjj(arr)
+ypjj(arr)
+xyenergy(arr)
+zgcgwblxx(arr)
+zgzyrmzf(arr)
+qgjzjgpt(arr)
+fgw(arr)
+xyyy(arr)
+dcdydj(arr)
 
-## 打开的很慢的
+# ## 打开的很慢的
+gjtjj(arr)
 rmyh(arr)
-qh(arr)
 hgjck(arr)
-hgzc(arr)
 
-# 不行的
+# todo不行的
 # gjqyxygs(arr)
 # xyzg(arr)
+# qh(arr)
+# hgzc(arr)

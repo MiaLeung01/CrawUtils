@@ -80,7 +80,7 @@ def crop_image(driver, element):
 from PIL import ImageGrab
 
 def img_path(folder, index, name):
-  save_path = os.path.join(os.getcwd(), 'jiangsu', folder)
+  save_path = os.path.join(os.getcwd(), 'part2', folder)
   if not os.path.exists(save_path):
     os.makedirs(save_path)
   save_name = str(index + 1) + '.' + name + '.png'
